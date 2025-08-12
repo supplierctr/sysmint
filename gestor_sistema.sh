@@ -108,7 +108,8 @@ github_menu() {
     echo -e "${AZUL}--- Menú de GitHub ---${NC}"
     echo "1) Listar mis repositorios"
     echo "2) Crear un nuevo repositorio"
-    echo "3) Volver al menú principal"
+    echo "3) Clonar un repositorio"
+    echo "4) Volver al menú principal"
     read -p "Elige una opción: " gh_choice
 
     case "$gh_choice" in
@@ -123,8 +124,13 @@ github_menu() {
                 echo -e "${VERDE}¡Repositorio '$repo_name' creado!${NC}"
             fi
             ;;
-        3) return ;;
-        *) echo -e "${ROJO}Opción inválida.${NC}" ;;
+        3)
+            clonar_repo_github
+            ;;
+        4) return ;; 
+        *)
+            echo -e "${ROJO}Opción inválida.${NC}"
+            ;; 
     esac
 }
 
@@ -143,18 +149,47 @@ clonar_repo_github() {
 
 # --- Otras Funciones ---
 
-mostrar_historial() {
-    echo -e "${AZUL}--- Últimos 20 Comandos del Historial ---${NC}"
-    # fc -l -n lista los comandos sin números, -r los invierte (más recientes primero)
-    fc -l -n -r -20 | tac
-    echo "----------------------------------------"
+gemini_menu() {
+    echo -e "${AZUL}--- Menú de Gemini ---${NC}"
+    echo "1) Montar carpeta"
+    echo "2) Correr Gemini (debug)"
+    echo "3) Correr servidor con Python"
+    echo "4) Volver al menú principal"
+    read -p "Elige una opción: " gemini_choice
+
+    case "$gemini_choice" in
+        1)
+            echo -e "${CYAN}Listando carpetas...${NC}"
+            select dir in */; do
+                if [ -n "$dir" ]; then
+                    cd "$dir"
+                    echo -e "${VERDE}Montado en $(pwd)${NC}"
+                    break
+                else
+                    echo -e "${ROJO}Selección inválida.${NC}"
+                fi
+            done
+            ;;
+        2)
+            echo -e "${CYAN}Corriendo Gemini en modo debug...${NC}"
+            gemini --debug
+            ;;
+        3)
+            echo -e "${CYAN}Corriendo servidor Python...${NC}"
+            echo -e "${AMARILLO}Accede a http://localhost:8000 en tu navegador.${NC}"
+            python3 -m http.server
+            ;;
+        4) return ;; 
+        *)
+            echo -e "${ROJO}Opción inválida.${NC}"
+            ;; 
+    esac
 }
 
 # --- Menú Principal ---
 while true; do
     print_banner
-    printf " %-45s
-" "Selecciona una tarea:"
+    printf " %-45s\n" "Selecciona una tarea:"
     echo "------------------------------------------------------"
     printf " ${VERDE}1)${NC} Verificar actualizaciones
 "
@@ -164,7 +199,7 @@ while true; do
 "
     printf " ${CYAN}4)${NC} Menú de GitHub (con 'gh')
 "
-    printf " ${AZUL}5)${NC} Ver historial de comandos
+    printf " ${AZUL}5)${NC} Ejecutar Gemini
 "
     printf " ${ROJO}6)${NC} Salir
 "
@@ -174,7 +209,7 @@ while true; do
     case "$choice" in
         1)
             verificar_actualizaciones
-            ;;
+            ;; 
         2)
             verificar_actualizaciones
             read -p "¿Deseas aplicar las actualizaciones encontradas? (s/n): " apply
@@ -183,24 +218,25 @@ while true; do
             else
                 echo -e "${AMARILLO}Operación cancelada.${NC}"
             fi
-            ;;
+            ;; 
         3)
             clonar_repo_github
-            ;;
+            ;; 
         4)
             github_menu
-            ;;
+            ;; 
         5)
-            mostrar_historial
-            ;;
+            gemini_menu
+            ;; 
         6)
             echo -e "${AMARILLO}Saliendo... ¡Hasta pronto!${NC}"
             exit 0
-            ;;
+            ;; 
         *)
             echo -e "${ROJO}Elección inválida. Por favor, selecciona una opción del 1 al 6.${NC}"
-            ;;
+            ;; 
     esac
+
     read -p $'
 Presiona Enter para continuar...'
 done
