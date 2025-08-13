@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 # Salir inmediatamente si un comando falla.
 set -e
 
@@ -40,7 +39,7 @@ verificar_actualizaciones() {
 
     # 2. Contar los paquetes actualizables de forma robusta
     # Se redirige stderr a /dev/null para ignorar advertencias.
-    # Se usa `grep -c /` para contar solo las líneas que contienen nombres de paquetes (ej: firefox/stable...).
+    # Se usa `grep -c /` para contar solo las líneas que contienen nombres de paquetes (ej: firefox/stable...). 
     # `|| true` asegura que el script no se detenga si no hay actualizaciones (grep devuelve 1 si no encuentra nada).
     APT_TOTAL=$(apt list --upgradable 2>/dev/null | grep -c / || true)
 
@@ -116,17 +115,17 @@ github_menu() {
         1)
             echo -e "${CYAN}Listando tus repositorios...${NC}"
             gh repo list
-            ;;
+            ;; 
         2)
             read -p "Nombre para el nuevo repositorio: " repo_name
             if [ -n "$repo_name" ]; then
                 gh repo create "$repo_name" --public --confirm
                 echo -e "${VERDE}¡Repositorio '$repo_name' creado!${NC}"
             fi
-            ;;
+            ;; 
         3)
             clonar_repo_github
-            ;;
+            ;; 
         4) return ;; 
         *)
             echo -e "${ROJO}Opción inválida.${NC}"
@@ -169,17 +168,68 @@ gemini_menu() {
                     echo -e "${ROJO}Selección inválida.${NC}"
                 fi
             done
-            ;;
+            ;; 
         2)
             echo -e "${CYAN}Corriendo Gemini en modo debug...${NC}"
             gemini --debug
-            ;;
+            ;; 
         3)
             echo -e "${CYAN}Corriendo servidor Python...${NC}"
             echo -e "${AMARILLO}Accede a http://localhost:8000 en tu navegador.${NC}"
             python3 -m http.server
-            ;;
+            ;; 
         4) return ;; 
+        *)
+            echo -e "${ROJO}Opción inválida.${NC}"
+            ;; 
+    esac
+}
+
+# --- Función para Instalar Aplicaciones ---
+instalar_apps_menu() {
+    echo -e "${AZUL}--- Menú de Instalación de Aplicaciones ---${NC}"
+    echo "1) Buscar e Instalar con APT"
+    echo "2) Buscar e Instalar con Flatpak"
+    echo "3) Volver al menú principal"
+    read -p "Elige una opción: " install_choice
+
+    case "$install_choice" in
+        1)
+            read -p "Introduce el nombre del paquete a buscar con APT: " apt_search
+            if [ -n "$apt_search" ]; then
+                echo -e "${CYAN}Buscando en APT...${NC}"
+                apt search "$apt_search"
+                echo "---"
+                read -p "Introduce el nombre exacto del paquete a instalar (o Enter para cancelar): " apt_install
+                if [ -n "$apt_install" ]; then
+                    sudo apt install "$apt_install" -y
+                    echo -e "${VERDE}¡Paquete '$apt_install' instalado con APT!${NC}"
+                else
+                    echo -e "${AMARILLO}Instalación cancelada.${NC}"
+                fi
+            fi
+            ;; 
+        2)
+            if ! command_exists flatpak;
+            then
+                echo -e "${ROJO}Error: 'flatpak' no está instalado. Por favor, instálalo primero.${NC}"
+                return
+            fi
+            read -p "Introduce el nombre de la app a buscar en Flathub: " flatpak_search
+            if [ -n "$flatpak_search" ]; then
+                echo -e "${CYAN}Buscando en Flathub...${NC}"
+                flatpak search "$flatpak_search"
+                echo "---"
+                read -p "Introduce el ID exacto de la aplicación a instalar (o Enter para cancelar): " flatpak_install
+                if [ -n "$flatpak_install" ]; then
+                    flatpak install "$flatpak_install" -y
+                    echo -e "${VERDE}¡Aplicación '$flatpak_install' instalada con Flatpak!${NC}"
+                else
+                    echo -e "${AMARILLO}Instalación cancelada.${NC}"
+                fi
+            fi
+            ;; 
+        3) return ;; 
         *)
             echo -e "${ROJO}Opción inválida.${NC}"
             ;; 
@@ -191,26 +241,21 @@ while true; do
     print_banner
     printf " %-45s\n" "Selecciona una tarea:"
     echo "------------------------------------------------------"
-    printf " ${VERDE}1)${NC} Verificar actualizaciones
-"
-    printf " ${VERDE}2)${NC} Aplicar actualizaciones
-"
-    printf " ${CYAN}3)${NC} Clonar repositorio de GitHub
-"
-    printf " ${CYAN}4)${NC} Menú de GitHub (con 'gh')
-"
-    printf " ${AZUL}5)${NC} Ejecutar Gemini
-"
-    printf " ${ROJO}6)${NC} Salir
-"
+    printf " ${VERDE}1)${NC} Verificar actualizaciones\n"
+    printf " ${VERDE}2)${NC} Aplicar actualizaciones\n"
+    printf " ${CYAN}3)${NC} Clonar repositorio de GitHub\n"
+    printf " ${CYAN}4)${NC} Menú de GitHub (con 'gh')\n"
+    printf " ${AZUL}5)${NC} Ejecutar Gemini\n"
+    printf " ${AMARILLO}6)${NC} Instalar Apps\n"
+    printf " ${ROJO}7)${NC} Salir\n"
     echo "------------------------------------------------------"
-    read -p "Ingresa tu elección [1-6]: " choice
+    read -p "Ingresa tu elección [1-7]: " choice
 
     case "$choice" in
-        1)
+        1) 
             verificar_actualizaciones
             ;; 
-        2)
+        2) 
             verificar_actualizaciones
             read -p "¿Deseas aplicar las actualizaciones encontradas? (s/n): " apply
             if [[ "$apply" == "s" || "$apply" == "S" ]]; then
@@ -219,24 +264,26 @@ while true; do
                 echo -e "${AMARILLO}Operación cancelada.${NC}"
             fi
             ;; 
-        3)
+        3) 
             clonar_repo_github
             ;; 
-        4)
+        4) 
             github_menu
             ;; 
-        5)
+        5) 
             gemini_menu
             ;; 
-        6)
+        6) 
+            instalar_apps_menu
+            ;; 
+        7) 
             echo -e "${AMARILLO}Saliendo... ¡Hasta pronto!${NC}"
             exit 0
             ;; 
         *)
-            echo -e "${ROJO}Elección inválida. Por favor, selecciona una opción del 1 al 6.${NC}"
+            echo -e "${ROJO}Elección inválida. Por favor, selecciona una opción del 1 al 7.${NC}"
             ;; 
     esac
 
-    read -p $'
-Presiona Enter para continuar...'
+    read -p $'\nPresiona Enter para continuar...'
 done
